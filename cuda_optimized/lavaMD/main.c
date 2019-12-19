@@ -44,8 +44,8 @@
 //	MAIN FUNCTION
 //========================================================================================================================================================================================================200
 
-int 
-main(	int argc, 
+int
+main(	int argc,
 		char *argv [])
 {
 
@@ -199,8 +199,8 @@ main(	int argc,
 								box_cpu[nh].nei[box_cpu[nh].nn].x = (k+n);
 								box_cpu[nh].nei[box_cpu[nh].nn].y = (j+m);
 								box_cpu[nh].nei[box_cpu[nh].nn].z = (i+l);
-								box_cpu[nh].nei[box_cpu[nh].nn].number =	(box_cpu[nh].nei[box_cpu[nh].nn].z * dim_cpu.boxes1d_arg * dim_cpu.boxes1d_arg) + 
-																			(box_cpu[nh].nei[box_cpu[nh].nn].y * dim_cpu.boxes1d_arg) + 
+								box_cpu[nh].nei[box_cpu[nh].nn].number =	(box_cpu[nh].nei[box_cpu[nh].nn].z * dim_cpu.boxes1d_arg * dim_cpu.boxes1d_arg) +
+																			(box_cpu[nh].nei[box_cpu[nh].nn].y * dim_cpu.boxes1d_arg) +
 																			 box_cpu[nh].nei[box_cpu[nh].nn].x;
 								box_cpu[nh].nei[box_cpu[nh].nn].offset = box_cpu[nh].nei[box_cpu[nh].nn].number * NUMBER_PAR_PER_BOX;
 
@@ -277,12 +277,12 @@ main(	int argc,
 	// dump results
 #ifdef OUTPUT
         FILE *fptr;
-	fptr = fopen("result.txt", "w");	
+	fptr = fopen("result.txt", "w");
 	for(i=0; i<dim_cpu.space_elem; i=i+1){
         	fprintf(fptr, "%f, %f, %f, %f\n", fv_cpu[i].v, fv_cpu[i].x, fv_cpu[i].y, fv_cpu[i].z);
 	}
 	fclose(fptr);
-#endif       	
+#endif
 
 
 

@@ -6,13 +6,10 @@ CC := nvcc
 
 INCLUDE := $(CUDA_DIR)/include
 
-all: naive float
+all: float
 
-naive: ex_particle_CUDA_naive_seq.cu
-	$(CC) -I$(INCLUDE) -L$(CUDA_LIB_DIR) -lcuda -g -lm -O3 -use_fast_math -arch sm_35 ex_particle_CUDA_naive_seq.cu -o particlefilter_naive
-	
 float: ex_particle_CUDA_float_seq.cu
-	$(CC) -I$(INCLUDE) -L$(CUDA_LIB_DIR) -lcuda -g -lm -O3 -use_fast_math -arch sm_35 ex_particle_CUDA_float_seq.cu -o particlefilter_float
+	$(CC) -I$(INCLUDE) -L$(CUDA_LIB_DIR) -lcuda -g -lm -O3 -use_fast_math -arch sm_35 -use_fast_math ex_particle_CUDA_float_seq.cu -o particlefilter_float
 
 clean:
-	rm particlefilter_naive particlefilter_float
+	rm particlefilter_float

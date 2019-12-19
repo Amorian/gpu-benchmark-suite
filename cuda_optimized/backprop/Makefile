@@ -21,7 +21,7 @@ ifeq ($(emu),1)
 endif
 
 
-backprop: backprop.o facetrain.o imagenet.o backprop_cuda.o 
+backprop: backprop.o facetrain.o imagenet.o backprop_cuda.o
 	$(CC) $(CC_FLAGS) backprop.o facetrain.o imagenet.o backprop_cuda.o -o backprop -L$(CUDA_LIB_DIR) -lcuda -lcudart -lm
 
 %.o: %.[ch]
@@ -29,12 +29,12 @@ backprop: backprop.o facetrain.o imagenet.o backprop_cuda.o
 
 facetrain.o: facetrain.c backprop.h
 	$(CC) $(CC_FLAGS) facetrain.c -c
-	
+
 backprop.o: backprop.c backprop.h
 	$(CC) $(CC_FLAGS) backprop.c -c
 
 backprop_cuda.o: backprop_cuda.cu backprop.h
-	$(NVCC) $(NVCC_FLAGS) -c backprop_cuda.cu
+	$(NVCC) $(NVCC_FLAGS) -c backprop_cuda.cu -use_fast_math
 
 imagenet.o: imagenet.c backprop.h
 	$(CC) $(CC_FLAGS) imagenet.c -c

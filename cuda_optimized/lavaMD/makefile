@@ -32,7 +32,7 @@ a.out:		main.o \
 			./util/timer/timer.o \
 			./util/device/device.o \
 			-lm \
-			-L/usr/local/cuda/lib64 \
+			-L/usr/local/stow/cuda-10.1/lib64 \
 			-lcuda -lcudart \
 			$(OMP_LIB) \
 			-o lavaMD
@@ -80,7 +80,8 @@ main.o:		main.h \
 	$(CUD_C)			./util/device/device.cu \
 						-c \
 						-o ./util/device/device.o \
-						-O3
+						-O3 \
+						$(CUDA_FLAG)
 
 # delete all object and executable files
 clean:

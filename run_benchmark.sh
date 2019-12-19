@@ -10,13 +10,9 @@ cfd_pre_single="/pre_euler3d data/cfd/missile.domn.0.2M"
 cfd_pre_double="/pre_euler3d_double data/cfd/missile.domn.0.2M"
 gaussian="/gaussian -f data/gaussian/matrix4.txt"
 heartwall="/heartwall data/heartwall/test.avi 20"
-hotspot="/hotspot 512 2 2 data/hotspot/temp_512 data/hotspot/power_512 output.out"
-hotspot3D="/3D 512 8 100 data/hotspot3D/power_512x8 data/hotspot3D/temp_512x8 output.out"
 lavaMD="/lavaMD -boxes1d 50"
-myocyte="/myocyte.out 100 1 0"
 nn="/nn cuda/nn/filelist_4 -r 5 -lat 30 -lng 90"
 particlefilter="/particlefilter_float -x 128 -y 128 -z 10 -np 1000"
-srad_v1="/srad_v1/srad 100 0.5 502 458"
 streamcluster="/sc_gpu 10 20 256 65536 65536 1000 none output.txt 1"
 
 cuda="cuda/"
@@ -47,42 +43,42 @@ benchmark()
       echo "Single Precision"
       eval "${time_power} ${cuda}${1}${cfd_single}"
       eval "${flops} ${cuda}${1}${cfd_single}"
-      calculate "cuda ${1}"
+      calculate "cuda Single Precision ${1}"
       sleep 10
       echo "Single Precision"
       eval "${time_power} ${cuda_optimized}${1}${cfd_single}"
       eval "${flops} ${cuda_optimized}${1}${cfd_single}"
-      calculate "cuda_optimized ${1}"
+      calculate "cuda_optimized Single Precision ${1}"
       sleep 10
       echo "Double Precision"
       eval "${time_power} ${cuda}${1}${cfd_double}"
       eval "${flops} ${cuda}${1}${cfd_double}"
-      calculate "cuda ${1}"
+      calculate "cuda Double Precision ${1}"
       sleep 10
       echo "Double Precision"
       eval "${time_power} ${cuda_optimized}${1}${cfd_double}"
       eval "${flops} ${cuda_optimized}${1}${cfd_double}"
-      calculate "cuda_optimized ${1}"
+      calculate "cuda_optimized Double Precision ${1}"
       sleep 10
       echo "Pre Single Precision"
       eval "${time_power} ${cuda}${1}${cfd_pre_single}"
       eval "${flops} ${cuda}${1}${cfd_pre_single}"
-      calculate "cuda ${1}"
+      calculate "cuda Pre Single Precision ${1}"
       sleep 10
       echo "Pre Single Precision"
       eval "${time_power} ${cuda_optimized}${1}${cfd_pre_single}"
       eval "${flops} ${cuda_optimized}${1}${cfd_pre_single}"
-      calculate "cuda_optimized ${1}"
+      calculate "cuda_optimized Pre Single Precision ${1}"
       sleep 10
       echo "Pre Double Precision"
       eval "${time_power} ${cuda}${1}${cfd_pre_double}"
       eval "${flops} ${cuda}${1}${cfd_pre_double}"
-      calculate "cuda ${1}"
+      calculate "cuda Pre Double Precision ${1}"
       sleep 10
       echo "Pre Double Precision"
       eval "${time_power} ${cuda_optimized}${1}${cfd_pre_double}"
       eval "${flops} ${cuda_optimized}${1}${cfd_pre_double}"
-      calculate "cuda_optimized ${1}"
+      calculate "cuda_optimized Pre Double Precision ${1}"
       ;;
     "gaussian")
       eval "${time_power} ${cuda}${1}${gaussian}"
@@ -102,24 +98,6 @@ benchmark()
       eval "${flops} ${cuda_optimized}${1}${heartwall}"
       calculate "cuda_optimized ${1}"
       ;;
-    "hotspot")
-      eval "${time_power} ${cuda}${1}${hotspot}"
-      eval "${flops} ${cuda}${1}${hotspot}"
-      calculate "cuda ${1}"
-      sleep 10
-      eval "${time_power} ${cuda_optimized}${1}${hotspot}"
-      eval "${flops} ${cuda_optimized}${1}${hotspot}"
-      calculate "cuda_optimized ${1}"
-      ;;
-    "hotspot3D")
-      eval "${time_power} ${cuda}${1}${hotspot3D}"
-      eval "${flops} ${cuda}${1}${hotspot3D}"
-      calculate "cuda ${1}"
-      sleep 10
-      eval "${time_power} ${cuda_optimized}${1}${hotspot3D}"
-      eval "${flops} ${cuda_optimized}${1}${hotspot3D}"
-      calculate "cuda_optimized ${1}"
-      ;;
     "lavaMD")
       eval "${time_power} ${cuda}${1}${lavaMD}"
       eval "${flops} ${cuda}${1}${lavaMD}"
@@ -127,15 +105,6 @@ benchmark()
       sleep 10
       eval "${time_power} ${cuda_optimized}${1}${lavaMD}"
       eval "${flops} ${cuda_optimized}${1}${lavaMD}"
-      calculate "cuda_optimized ${1}"
-      ;;
-    "myocyte")
-      eval "${time_power} ${cuda}${1}${myocyte}"
-      eval "${flops} ${cuda}${1}${myocyte}"
-      calculate "cuda ${1}"
-      sleep 10
-      eval "${time_power} ${cuda_optimized}${1}${myocyte}"
-      eval "${flops} ${cuda_optimized}${1}${myocyte}"
       calculate "cuda_optimized ${1}"
       ;;
     "nn")
@@ -154,15 +123,6 @@ benchmark()
       sleep 10
       eval "${time_power} ${cuda_optimized}${1}${particlefilter}"
       eval "${flops} ${cuda_optimized}${1}${particlefilter}"
-      calculate "cuda_optimized ${1}"
-      ;;
-    "srad")
-      eval "${time_power} ${cuda}${1}${srad_v1}"
-      eval "${flops} ${cuda}${1}${srad_v1}"
-      calculate "cuda ${1}"
-      sleep 10
-      eval "${time_power} ${cuda_optimized}${1}${srad_v1}"
-      eval "${flops} ${cuda_optimized}${1}${srad_v1}"
       calculate "cuda_optimized ${1}"
       ;;
     "streamcluster")
@@ -186,7 +146,7 @@ then
   exit 1
 fi
 
-full_list=( "backprop" "cfd" "gaussian" "heartwall" "hotspot" "hotspot3D" "lavaMD" "myocyte" "nn" "particlefilter" "srad" "streamcluster")
+full_list=( "backprop" "cfd" "gaussian" "heartwall" "lavaMD" "nn" "particlefilter" "streamcluster")
 
 options=()
 

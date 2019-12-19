@@ -9,11 +9,11 @@ clean :
 	rm -rf *.o nn hurricane_gen
 
 nn : nn_cuda.cu
-	$(CC) -cuda --gpu-architecture=sm_35 nn_cuda.cu
+	$(CC) -cuda --gpu-architecture=sm_35 -use_fast_math nn_cuda.cu
 	$(CC) -o nn nn_cuda.cu
 
 clang: $(SRC)
-	clang++ nn_cuda.cu -o nn -I../util --cuda-gpu-arch=sm_35 \
+	clang++ nn_cuda.cu -o nn -I../util --cuda-gpu-arch=sm_35 -use_fast_math \
 		-L/usr/local/cuda/lib64 -lcudart_static -ldl -lrt -pthread -DTIMING
 
 hurricane_gen : hurricane_gen.c

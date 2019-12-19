@@ -1,11 +1,11 @@
 /*-----------------------------------------------------------
  ** gaussian.cu -- The program is to solve a linear system Ax = b
  **   by using Gaussian Elimination. The algorithm on page 101
- **   ("Foundations of Parallel Programming") is used.  
- **   The sequential version is gaussian.c.  This parallel 
- **   implementation converts three independent for() loops 
- **   into three Fans.  Use the data file ge_3.dat to verify 
- **   the correction of the output. 
+ **   ("Foundations of Parallel Programming") is used.
+ **   The sequential version is gaussian.c.  This parallel
+ **   implementation converts three independent for() loops
+ **   into three Fans.  Use the data file ge_3.dat to verify
+ **   the correction of the output.
  **
  ** Written by Andreas Kura, 02/15/95
  ** Modified by Chong-wei Xu, 04/20/95
@@ -33,7 +33,7 @@
         #define MAXBLOCKSIZE 512
 #endif
 
-//2D defines. Go from specific to general                                                
+//2D defines. Go from specific to general
 #ifdef RD_WG_SIZE_1_0
         #define BLOCK_SIZE_XY RD_WG_SIZE_1_0
 #elif defined(RD_WG_SIZE_1)
@@ -87,10 +87,10 @@ create_matrix(float *m, int size){
 
   for (i=0; i < size; i++)
     {
-      coe_i = 10*exp(lamda*i); 
-      j=size-1+i;     
+      coe_i = 10*exp(lamda*i);
+      j=size-1+i;
       coe[j]=coe_i;
-      j=size-1-i;     
+      j=size-1-i;
       coe[j]=coe_i;
     }
 
@@ -128,15 +128,15 @@ int main(int argc, char *argv[])
         printf("\n");
         printf("-0.6	-0.5	0.7	0.3\n");
         printf("-0.3	-0.9	0.3	0.7\n");
-        printf("-0.4	-0.5	-0.3	-0.8\n");	
+        printf("-0.4	-0.5	-0.3	-0.8\n");
         printf("0.0	-0.1	0.2	0.9\n");
         printf("\n");
-        printf("-0.85	-0.68	0.24	-0.53\n");	
+        printf("-0.85	-0.68	0.24	-0.53\n");
         printf("\n");
         printf("0.7	0.0	-0.4	-0.5\n");
         exit(0);
     }
-    
+
     PrintDeviceProperties();
     //char filename[100];
     //sprintf(filename,"matrices/matrix%d.txt",size);
@@ -150,14 +150,14 @@ int main(int argc, char *argv[])
               Size = atoi(argv[i]);
 	      printf("Create matrix internally in parse, size = %d \n", Size);
 
-	      a = (float *) malloc(Size * Size * sizeof(float));
+        cudaHostAlloc((void **) &a, Size * Size * sizeof(float), cudaHostAllocWriteCombined);
 	      create_matrix(a, Size);
 
-	      b = (float *) malloc(Size * sizeof(float));
+        cudaHostAlloc((void **) &b, Size * sizeof(float), cudaHostAllocWriteCombined);
 	      for (j =0; j< Size; j++)
 	    	b[j]=1.0;
 
-	      m = (float *) malloc(Size * Size * sizeof(float));
+        cudaHostAlloc((void **) &m, Size * Size * sizeof(float), cudaHostAllocWriteCombined);
               break;
             case 'f': // platform
               i++;
@@ -175,16 +175,16 @@ int main(int argc, char *argv[])
     InitPerRun();
     //begin timing
     struct timeval time_start;
-    gettimeofday(&time_start, NULL);	
-    
+    gettimeofday(&time_start, NULL);
+
     // run kernels
     ForwardSub();
-    
+
     //end timing
     struct timeval time_end;
     gettimeofday(&time_end, NULL);
     unsigned int time_total = (time_end.tv_sec * 1000000 + time_end.tv_usec) - (time_start.tv_sec * 1000000 + time_start.tv_usec);
-    
+
     if (verbose) {
         printf("Matrix m is: \n");
         PrintMat(m, Size, Size);
@@ -202,13 +202,13 @@ int main(int argc, char *argv[])
     }
     printf("\nTime total (including memory transfers)\t%f sec\n", time_total * 1e-6);
     printf("Time for CUDA kernels:\t%f sec\n",totalKernelTime * 1e-6);
-    
+
     /*printf("%d,%d\n",size,time_total);
     fprintf(stderr,"%d,%d\n",size,time_total);*/
-    
-    free(m);
-    free(a);
-    free(b);
+
+    cudaFreeHost(m);
+    cudaFreeHost(a);
+    cudaFreeHost(b);
 
 #ifdef  TIMING
 	printf("Exec: %f\n", kernel_time);
@@ -219,39 +219,39 @@ int main(int argc, char *argv[])
  **-----------------------------------------------------
  */
 void PrintDeviceProperties(){
-	cudaDeviceProp deviceProp;  
-	int nDevCount = 0;  
-	
-	cudaGetDeviceCount( &nDevCount );  
-	printf( "Total Device found: %d", nDevCount );  
-	for (int nDeviceIdx = 0; nDeviceIdx < nDevCount; ++nDeviceIdx )  
-	{  
-	    memset( &deviceProp, 0, sizeof(deviceProp));  
-	    if( cudaSuccess == cudaGetDeviceProperties(&deviceProp, nDeviceIdx))  
+	cudaDeviceProp deviceProp;
+	int nDevCount = 0;
+
+	cudaGetDeviceCount( &nDevCount );
+	printf( "Total Device found: %d", nDevCount );
+	for (int nDeviceIdx = 0; nDeviceIdx < nDevCount; ++nDeviceIdx )
+	{
+	    memset( &deviceProp, 0, sizeof(deviceProp));
+	    if( cudaSuccess == cudaGetDeviceProperties(&deviceProp, nDeviceIdx))
 	        {
-				printf( "\nDevice Name \t\t - %s ", deviceProp.name );  
-			    printf( "\n**************************************");  
-			    printf( "\nTotal Global Memory\t\t\t - %lu KB", deviceProp.totalGlobalMem/1024 );  
-			    printf( "\nShared memory available per block \t - %lu KB", deviceProp.sharedMemPerBlock/1024 );  
-			    printf( "\nNumber of registers per thread block \t - %d", deviceProp.regsPerBlock );  
-			    printf( "\nWarp size in threads \t\t\t - %d", deviceProp.warpSize );  
-			    printf( "\nMemory Pitch \t\t\t\t - %zu bytes", deviceProp.memPitch );  
-			    printf( "\nMaximum threads per block \t\t - %d", deviceProp.maxThreadsPerBlock );  
-			    printf( "\nMaximum Thread Dimension (block) \t - %d %d %d", deviceProp.maxThreadsDim[0], deviceProp.maxThreadsDim[1], deviceProp.maxThreadsDim[2] );  
-			    printf( "\nMaximum Thread Dimension (grid) \t - %d %d %d", deviceProp.maxGridSize[0], deviceProp.maxGridSize[1], deviceProp.maxGridSize[2] );  
-			    printf( "\nTotal constant memory \t\t\t - %zu bytes", deviceProp.totalConstMem );  
-			    printf( "\nCUDA ver \t\t\t\t - %d.%d", deviceProp.major, deviceProp.minor );  
-			    printf( "\nClock rate \t\t\t\t - %d KHz", deviceProp.clockRate );  
-			    printf( "\nTexture Alignment \t\t\t - %zu bytes", deviceProp.textureAlignment );  
-			    printf( "\nDevice Overlap \t\t\t\t - %s", deviceProp. deviceOverlap?"Allowed":"Not Allowed" );  
-			    printf( "\nNumber of Multi processors \t\t - %d\n\n", deviceProp.multiProcessorCount );  
-			}  
-	    else  
-	        printf( "\n%s", cudaGetErrorString(cudaGetLastError()));  
-	}  
+				printf( "\nDevice Name \t\t - %s ", deviceProp.name );
+			    printf( "\n**************************************");
+			    printf( "\nTotal Global Memory\t\t\t - %lu KB", deviceProp.totalGlobalMem/1024 );
+			    printf( "\nShared memory available per block \t - %lu KB", deviceProp.sharedMemPerBlock/1024 );
+			    printf( "\nNumber of registers per thread block \t - %d", deviceProp.regsPerBlock );
+			    printf( "\nWarp size in threads \t\t\t - %d", deviceProp.warpSize );
+			    printf( "\nMemory Pitch \t\t\t\t - %zu bytes", deviceProp.memPitch );
+			    printf( "\nMaximum threads per block \t\t - %d", deviceProp.maxThreadsPerBlock );
+			    printf( "\nMaximum Thread Dimension (block) \t - %d %d %d", deviceProp.maxThreadsDim[0], deviceProp.maxThreadsDim[1], deviceProp.maxThreadsDim[2] );
+			    printf( "\nMaximum Thread Dimension (grid) \t - %d %d %d", deviceProp.maxGridSize[0], deviceProp.maxGridSize[1], deviceProp.maxGridSize[2] );
+			    printf( "\nTotal constant memory \t\t\t - %zu bytes", deviceProp.totalConstMem );
+			    printf( "\nCUDA ver \t\t\t\t - %d.%d", deviceProp.major, deviceProp.minor );
+			    printf( "\nClock rate \t\t\t\t - %d KHz", deviceProp.clockRate );
+			    printf( "\nTexture Alignment \t\t\t - %zu bytes", deviceProp.textureAlignment );
+			    printf( "\nDevice Overlap \t\t\t\t - %s", deviceProp. deviceOverlap?"Allowed":"Not Allowed" );
+			    printf( "\nNumber of Multi processors \t\t - %d\n\n", deviceProp.multiProcessorCount );
+			}
+	    else
+	        printf( "\n%s", cudaGetErrorString(cudaGetLastError()));
+	}
 }
- 
- 
+
+
 /*------------------------------------------------------
  ** InitProblemOnce -- Initialize all of matrices and
  ** vectors by opening a data file specified by the user.
@@ -263,27 +263,28 @@ void PrintDeviceProperties(){
 void InitProblemOnce(char *filename)
 {
 	//char *filename = argv[1];
-	
+
 	//printf("Enter the data file name: ");
 	//scanf("%s", filename);
 	//printf("The file name is: %s\n", filename);
-	
+
 	fp = fopen(filename, "r");
-	
-	fscanf(fp, "%d", &Size);	
-	 
-	a = (float *) malloc(Size * Size * sizeof(float));
-	 
+
+	fscanf(fp, "%d", &Size);
+
+  cudaHostAlloc((void **) &a, Size * Size * sizeof(float), cudaHostAllocWriteCombined);
+
 	InitMat(a, Size, Size);
 	//printf("The input matrix a is:\n");
 	//PrintMat(a, Size, Size);
-	b = (float *) malloc(Size * sizeof(float));
-	
+
+  cudaHostAlloc((void **) &b, Size * sizeof(float), cudaHostAllocWriteCombined);
+
 	InitAry(b, Size);
 	//printf("The input array b is:\n");
 	//PrintAry(b, Size);
-		
-	 m = (float *) malloc(Size * Size * sizeof(float));
+
+  cudaHostAlloc((void **) &m, Size * Size * sizeof(float), cudaHostAllocWriteCombined);
 }
 
 /*------------------------------------------------------
@@ -291,7 +292,7 @@ void InitProblemOnce(char *filename)
  ** multipier matrix **m
  **------------------------------------------------------
  */
-void InitPerRun() 
+void InitPerRun()
 {
 	int i;
 	for (i=0; i<Size*Size; i++)
@@ -307,7 +308,7 @@ void InitPerRun()
  **-------------------------------------------------------
  */
 __global__ void Fan1(float *m_cuda, float *a_cuda, int Size, int t)
-{   
+{
 	//if(threadIdx.x + blockIdx.x * blockDim.x >= Size-1-t) printf(".");
 	//printf("blockIDx.x:%d,threadIdx.x:%d,Size:%d,t:%d,Size-1-t:%d\n",blockIdx.x,threadIdx.x,Size,t,Size-1-t);
 
@@ -318,17 +319,17 @@ __global__ void Fan1(float *m_cuda, float *a_cuda, int Size, int t)
 /*-------------------------------------------------------
  ** Fan2() -- Modify the matrix A into LUD
  **-------------------------------------------------------
- */ 
+ */
 
 __global__ void Fan2(float *m_cuda, float *a_cuda, float *b_cuda,int Size, int j1, int t)
 {
 	if(threadIdx.x + blockIdx.x * blockDim.x >= Size-1-t) return;
 	if(threadIdx.y + blockIdx.y * blockDim.y >= Size-t) return;
-	
+
 	int xidx = blockIdx.x * blockDim.x + threadIdx.x;
 	int yidx = blockIdx.y * blockDim.y + threadIdx.y;
 	//printf("blockIdx.x:%d,threadIdx.x:%d,blockIdx.y:%d,threadIdx.y:%d,blockDim.x:%d,blockDim.y:%d\n",blockIdx.x,threadIdx.x,blockIdx.y,threadIdx.y,blockDim.x,blockDim.y);
-	
+
 	a_cuda[Size*(xidx+1+t)+(yidx+t)] -= m_cuda[Size*(xidx+1+t)+t] * a_cuda[Size*t+(yidx+t)];
 	//a_cuda[xidx+1+t][yidx+t] -= m_cuda[xidx+1+t][t] * a_cuda[t][yidx+t];
 	if(yidx == 0){
@@ -345,23 +346,30 @@ __global__ void Fan2(float *m_cuda, float *a_cuda, float *b_cuda,int Size, int j
  */
 void ForwardSub()
 {
+  cudaStream_t stream1, stream2, stream3;
 	int t;
     float *m_cuda,*a_cuda,*b_cuda;
-	
+
 	// allocate memory on GPU
 	cudaMalloc((void **) &m_cuda, Size * Size * sizeof(float));
-	 
+
 	cudaMalloc((void **) &a_cuda, Size * Size * sizeof(float));
-	
-	cudaMalloc((void **) &b_cuda, Size * sizeof(float));	
+
+	cudaMalloc((void **) &b_cuda, Size * sizeof(float));
+
+  cudaStreamCreate(&stream1);
+  cudaStreamCreate(&stream2);
+  cudaStreamCreate(&stream3);
 
 	// copy memory to GPU
-	cudaMemcpy(m_cuda, m, Size * Size * sizeof(float),cudaMemcpyHostToDevice );
-	cudaMemcpy(a_cuda, a, Size * Size * sizeof(float),cudaMemcpyHostToDevice );
-	cudaMemcpy(b_cuda, b, Size * sizeof(float),cudaMemcpyHostToDevice );
-	
+	cudaMemcpyAsync(m_cuda, m, Size * Size * sizeof(float),cudaMemcpyHostToDevice, stream1);
+	cudaMemcpyAsync(a_cuda, a, Size * Size * sizeof(float),cudaMemcpyHostToDevice, stream2);
+	cudaMemcpyAsync(b_cuda, b, Size * sizeof(float),cudaMemcpyHostToDevice, stream3);
+
+  cudaDeviceSynchronize();
+
 	int block_size,grid_size;
-	
+
 	block_size = MAXBLOCKSIZE;
 	grid_size = (Size/block_size) + (!(Size%block_size)? 0:1);
 	//printf("1d grid size: %d\n",grid_size);
@@ -370,11 +378,11 @@ void ForwardSub()
 	dim3 dimBlock(block_size);
 	dim3 dimGrid(grid_size);
 	//dim3 dimGrid( (N/dimBlock.x) + (!(N%dimBlock.x)?0:1) );
-	
+
 	int blockSize2d, gridSize2d;
 	blockSize2d = BLOCK_SIZE_XY;
-	gridSize2d = (Size/blockSize2d) + (!(Size%blockSize2d?0:1)); 
-	
+	gridSize2d = (Size/blockSize2d) + (!(Size%blockSize2d?0:1));
+
 	dim3 dimBlockXY(blockSize2d,blockSize2d);
 	dim3 dimGridXY(gridSize2d,gridSize2d);
 
@@ -387,28 +395,32 @@ void ForwardSub()
     gettimeofday(&time_start, NULL);
 	for (t=0; t<(Size-1); t++) {
 		Fan1<<<dimGrid,dimBlock>>>(m_cuda,a_cuda,Size,t);
-		cudaThreadSynchronize();
+		cudaDeviceSynchronize();
 		Fan2<<<dimGridXY,dimBlockXY>>>(m_cuda,a_cuda,b_cuda,Size,Size-t,t);
-		cudaThreadSynchronize();
+		cudaDeviceSynchronize();
 		checkCUDAError("Fan2");
 	}
 	// end timing kernels
 	struct timeval time_end;
     gettimeofday(&time_end, NULL);
     totalKernelTime = (time_end.tv_sec * 1000000 + time_end.tv_usec) - (time_start.tv_sec * 1000000 + time_start.tv_usec);
-	
+
 #ifdef  TIMING
 	tvsub(&time_end, &tv_kernel_start, &tv);
 	kernel_time += tv.tv_sec * 1000.0 + (float) tv.tv_usec / 1000.0;
 #endif
 
 	// copy memory back to CPU
-	cudaMemcpy(m, m_cuda, Size * Size * sizeof(float),cudaMemcpyDeviceToHost );
-	cudaMemcpy(a, a_cuda, Size * Size * sizeof(float),cudaMemcpyDeviceToHost );
-	cudaMemcpy(b, b_cuda, Size * sizeof(float),cudaMemcpyDeviceToHost );
+	cudaMemcpyAsync(m, m_cuda, Size * Size * sizeof(float),cudaMemcpyDeviceToHost, stream1);
+	cudaMemcpyAsync(a, a_cuda, Size * Size * sizeof(float),cudaMemcpyDeviceToHost, stream2);
+	cudaMemcpyAsync(b, b_cuda, Size * sizeof(float),cudaMemcpyDeviceToHost, stream3);
+  cudaDeviceSynchronize();
 	cudaFree(m_cuda);
 	cudaFree(a_cuda);
 	cudaFree(b_cuda);
+  cudaStreamDestroy(stream1);
+  cudaStreamDestroy(stream2);
+  cudaStreamDestroy(stream3);
 }
 
 /*------------------------------------------------------
@@ -435,12 +447,12 @@ void BackSub()
 void InitMat(float *ary, int nrow, int ncol)
 {
 	int i, j;
-	
+
 	for (i=0; i<nrow; i++) {
 		for (j=0; j<ncol; j++) {
 			fscanf(fp, "%f",  ary+Size*i+j);
 		}
-	}  
+	}
 }
 
 /*------------------------------------------------------
@@ -450,7 +462,7 @@ void InitMat(float *ary, int nrow, int ncol)
 void PrintMat(float *ary, int nrow, int ncol)
 {
 	int i, j;
-	
+
 	for (i=0; i<nrow; i++) {
 		for (j=0; j<ncol; j++) {
 			printf("%8.2f ", *(ary+Size*i+j));
@@ -468,11 +480,11 @@ void PrintMat(float *ary, int nrow, int ncol)
 void InitAry(float *ary, int ary_size)
 {
 	int i;
-	
+
 	for (i=0; i<ary_size; i++) {
 		fscanf(fp, "%f",  &ary[i]);
 	}
-}  
+}
 
 /*------------------------------------------------------
  ** PrintAry() -- Print the contents of the array (vector)
@@ -489,11 +501,10 @@ void PrintAry(float *ary, int ary_size)
 void checkCUDAError(const char *msg)
 {
     cudaError_t err = cudaGetLastError();
-    if( cudaSuccess != err) 
+    if( cudaSuccess != err)
     {
-        fprintf(stderr, "Cuda error: %s: %s.\n", msg, 
+        fprintf(stderr, "Cuda error: %s: %s.\n", msg,
                                   cudaGetErrorString( err) );
         exit(EXIT_FAILURE);
-    }                         
+    }
 }
-

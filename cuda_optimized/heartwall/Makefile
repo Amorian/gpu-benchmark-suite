@@ -4,7 +4,7 @@ override OUTPUT = -DOUTPUT
 endif
 
 # link objects(binaries) together
-heartwall: main.o ./AVI/avilib.o ./AVI/avimod.o 
+heartwall: main.o ./AVI/avilib.o ./AVI/avimod.o
 	nvcc main.o ./AVI/avilib.o ./AVI/avimod.o -I/usr/local/cuda/include -lm -o heartwall
 
 # compile main function file into object (binary)

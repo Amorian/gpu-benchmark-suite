@@ -76,8 +76,8 @@ void write_data(	char* filename,
 	//================================================================================80
 	//	WRITE VALUES TO THE FILE
 	//================================================================================80
-      fprintf(fid, "Total AVI Frames: %d\n", frameNo);	
-      fprintf(fid, "Frames Processed: %d\n", frames_processed);	
+      fprintf(fid, "Total AVI Frames: %d\n", frameNo);
+      fprintf(fid, "Frames Processed: %d\n", frames_processed);
       fprintf(fid, "endoPoints: %d\n", endoPoints);
       fprintf(fid, "epiPoints: %d", epiPoints);
 	for(j=0; j<frames_processed;j++)
@@ -119,6 +119,12 @@ void write_data(	char* filename,
 //===============================================================================================================================================================================================================
 int main(int argc, char *argv []){
 
+	cudaStream_t stream1, stream2, stream3, stream4;
+	cudaStreamCreate(&stream1);
+	cudaStreamCreate(&stream2);
+	cudaStreamCreate(&stream3);
+	cudaStreamCreate(&stream4);
+
   printf("WG size of kernel = %d \n", NUMBER_THREADS);
 	//======================================================================================================================================================
 	//	VARIABLES
@@ -145,7 +151,7 @@ int main(int argc, char *argv []){
 		printf("ERROR: usage: heartwall <inputfile> <num of frames>\n");
 		exit(1);
 	}
-	
+
 	// open movie file
  	video_file_name = argv[1];
 	frames = (avi_t*)AVI_open_input_file(video_file_name, 1);														// added casting
@@ -167,13 +173,13 @@ int main(int argc, char *argv []){
 	//======================================================================================================================================================
 	// 	CHECK INPUT ARGUMENTS
 	//======================================================================================================================================================
-	
+
 	frames_processed = atoi(argv[2]);
 		if(frames_processed<0 || frames_processed>common.no_frames){
 			printf("ERROR: %d is an incorrect number of frames specified, select in the range of 0-%d\n", frames_processed, common.no_frames);
 			return 0;
 	}
-	
+
 
 	//======================================================================================================================================================
 	//	HARDCODED INPUTS FROM MATLAB
@@ -195,7 +201,7 @@ int main(int argc, char *argv []){
 	common.endoPoints = ENDO_POINTS;
 	common.endo_mem = sizeof(int) * common.endoPoints;
 
-	common.endoRow = (int *)malloc(common.endo_mem);
+	cudaHostAlloc((void **) &common.endoRow, common.endo_mem, cudaHostAllocWriteCombined);
 	common.endoRow[ 0] = 369;
 	common.endoRow[ 1] = 400;
 	common.endoRow[ 2] = 429;
@@ -217,9 +223,9 @@ int main(int argc, char *argv []){
 	common.endoRow[18] = 311;
 	common.endoRow[19] = 339;
 	cudaMalloc((void **)&common.d_endoRow, common.endo_mem);
-	cudaMemcpy(common.d_endoRow, common.endoRow, common.endo_mem, cudaMemcpyHostToDevice);
+	cudaMemcpyAsync(common.d_endoRow, common.endoRow, common.endo_mem, cudaMemcpyHostToDevice, stream1);
 
-	common.endoCol = (int *)malloc(common.endo_mem);
+	cudaHostAlloc((void **) &common.endoCol, common.endo_mem, cudaHostAllocWriteCombined);
 	common.endoCol[ 0] = 408;
 	common.endoCol[ 1] = 406;
 	common.endoCol[ 2] = 397;
@@ -241,12 +247,12 @@ int main(int argc, char *argv []){
 	common.endoCol[18] = 401;
 	common.endoCol[19] = 411;
 	cudaMalloc((void **)&common.d_endoCol, common.endo_mem);
-	cudaMemcpy(common.d_endoCol, common.endoCol, common.endo_mem, cudaMemcpyHostToDevice);
+	cudaMemcpyAsync(common.d_endoCol, common.endoCol, common.endo_mem, cudaMemcpyHostToDevice, stream2);
 
-	common.tEndoRowLoc = (int *)malloc(common.endo_mem * common.no_frames);
+	cudaHostAlloc((void **) &common.tEndoRowLoc, common.endo_mem * common.no_frames, cudaHostAllocWriteCombined);
 	cudaMalloc((void **)&common.d_tEndoRowLoc, common.endo_mem * common.no_frames);
 
-	common.tEndoColLoc = (int *)malloc(common.endo_mem * common.no_frames);
+	cudaHostAlloc((void **) &common.tEndoColLoc, common.endo_mem * common.no_frames, cudaHostAllocWriteCombined);
 	cudaMalloc((void **)&common.d_tEndoColLoc, common.endo_mem * common.no_frames);
 
 	//====================================================================================================
@@ -256,7 +262,7 @@ int main(int argc, char *argv []){
 	common.epiPoints = EPI_POINTS;
 	common.epi_mem = sizeof(int) * common.epiPoints;
 
-	common.epiRow = (int *)malloc(common.epi_mem);
+	cudaHostAlloc((void **) &common.epiRow, common.epi_mem, cudaHostAllocWriteCombined);
 	common.epiRow[ 0] = 390;
 	common.epiRow[ 1] = 419;
 	common.epiRow[ 2] = 448;
@@ -289,9 +295,9 @@ int main(int argc, char *argv []){
 	common.epiRow[29] = 331;
 	common.epiRow[30] = 360;
 	cudaMalloc((void **)&common.d_epiRow, common.epi_mem);
-	cudaMemcpy(common.d_epiRow, common.epiRow, common.epi_mem, cudaMemcpyHostToDevice);
+	cudaMemcpyAsync(common.d_epiRow, common.epiRow, common.epi_mem, cudaMemcpyHostToDevice, stream3);
 
-	common.epiCol = (int *)malloc(common.epi_mem);
+	cudaHostAlloc((void **) &common.epiCol, common.epi_mem, cudaHostAllocWriteCombined);
 	common.epiCol[ 0] = 457;
 	common.epiCol[ 1] = 454;
 	common.epiCol[ 2] = 446;
@@ -324,13 +330,15 @@ int main(int argc, char *argv []){
 	common.epiCol[29] = 448;
 	common.epiCol[30] = 455;
 	cudaMalloc((void **)&common.d_epiCol, common.epi_mem);
-	cudaMemcpy(common.d_epiCol, common.epiCol, common.epi_mem, cudaMemcpyHostToDevice);
+	cudaMemcpyAsync(common.d_epiCol, common.epiCol, common.epi_mem, cudaMemcpyHostToDevice, stream4);
 
-	common.tEpiRowLoc = (int *)malloc(common.epi_mem * common.no_frames);
+	cudaHostAlloc((void **) &common.tEpiRowLoc, common.epi_mem * common.no_frames, cudaHostAllocWriteCombined);
 	cudaMalloc((void **)&common.d_tEpiRowLoc, common.epi_mem * common.no_frames);
 
-	common.tEpiColLoc = (int *)malloc(common.epi_mem * common.no_frames);
+	cudaHostAlloc((void **) &common.tEpiColLoc, common.epi_mem * common.no_frames, cudaHostAllocWriteCombined);
 	cudaMalloc((void **)&common.d_tEpiColLoc, common.epi_mem * common.no_frames);
+
+	cudaDeviceSynchronize();
 
 	//====================================================================================================
 	//	ALL POINTS
@@ -681,13 +689,13 @@ int main(int argc, char *argv []){
 	//	OUTPUT
 	//====================================================================================================
 
-	cudaMemcpy(common.tEndoRowLoc, common.d_tEndoRowLoc, common.endo_mem * common.no_frames, cudaMemcpyDeviceToHost);
-	cudaMemcpy(common.tEndoColLoc, common.d_tEndoColLoc, common.endo_mem * common.no_frames, cudaMemcpyDeviceToHost);
+	cudaMemcpyAsync(common.tEndoRowLoc, common.d_tEndoRowLoc, common.endo_mem * common.no_frames, cudaMemcpyDeviceToHost, stream1);
+	cudaMemcpyAsync(common.tEndoColLoc, common.d_tEndoColLoc, common.endo_mem * common.no_frames, cudaMemcpyDeviceToHost, stream2);
 
-	cudaMemcpy(common.tEpiRowLoc, common.d_tEpiRowLoc, common.epi_mem * common.no_frames, cudaMemcpyDeviceToHost);
-	cudaMemcpy(common.tEpiColLoc, common.d_tEpiColLoc, common.epi_mem * common.no_frames, cudaMemcpyDeviceToHost);
+	cudaMemcpyAsync(common.tEpiRowLoc, common.d_tEpiRowLoc, common.epi_mem * common.no_frames, cudaMemcpyDeviceToHost, stream3);
+	cudaMemcpyAsync(common.tEpiColLoc, common.d_tEpiColLoc, common.epi_mem * common.no_frames, cudaMemcpyDeviceToHost, stream4);
 
-
+	cudaDeviceSynchronize();
 
 #ifdef OUTPUT
 
@@ -696,7 +704,7 @@ int main(int argc, char *argv []){
 	//==================================================50
 	write_data(	"result.txt",
 			common.no_frames,
-			frames_processed,		
+			frames_processed,
 				common.endoPoints,
 				common.tEndoRowLoc,
 				common.tEndoColLoc,
@@ -724,10 +732,10 @@ int main(int argc, char *argv []){
 	cudaFree(common_change.d_frame);
 
 	// endo points
-	free(common.endoRow);
-	free(common.endoCol);
-	free(common.tEndoRowLoc);
-	free(common.tEndoColLoc);
+	cudaFreeHost(common.endoRow);
+	cudaFreeHost(common.endoCol);
+	cudaFreeHost(common.tEndoRowLoc);
+	cudaFreeHost(common.tEndoColLoc);
 
 	cudaFree(common.d_endoRow);
 	cudaFree(common.d_endoCol);
@@ -737,10 +745,10 @@ int main(int argc, char *argv []){
 	cudaFree(common.d_endoT);
 
 	// epi points
-	free(common.epiRow);
-	free(common.epiCol);
-	free(common.tEpiRowLoc);
-	free(common.tEpiColLoc);
+	cudaFreeHost(common.epiRow);
+	cudaFreeHost(common.epiCol);
+	cudaFreeHost(common.tEpiRowLoc);
+	cudaFreeHost(common.tEpiColLoc);
 
 	cudaFree(common.d_epiRow);
 	cudaFree(common.d_epiCol);
@@ -769,6 +777,11 @@ int main(int argc, char *argv []){
 		cudaFree(unique[i].d_tMask);
 		cudaFree(unique[i].d_mask_conv);
 	}
+
+	cudaStreamDestroy(stream1);
+	cudaStreamDestroy(stream2);
+	cudaStreamDestroy(stream3);
+	cudaStreamDestroy(stream4);
 
 }
 

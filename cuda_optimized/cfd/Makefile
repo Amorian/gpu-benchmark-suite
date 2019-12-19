@@ -11,7 +11,7 @@ ifeq ($(shell uname -m), x86_64)
 endif
 
 
-all: euler3d euler3d_double  pre_euler3d  pre_euler3d_double 
+all: euler3d euler3d_double  pre_euler3d  pre_euler3d_double
 
 euler3d: euler3d.cu
 	nvcc $(KERNEL_DIM) -O2 -Xptxas -v --gpu-architecture=sm_35 euler3d.cu -o euler3d -I $(CUDA_SDK_PATH)/common/inc  -L $(CUDA_SDK_PATH)/lib $(CUTIL_LIB)

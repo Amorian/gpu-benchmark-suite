@@ -31,7 +31,7 @@
 //	KERNEL_GPU_CUDA_WRAPPER FUNCTION
 //========================================================================================================================================================================================================200
 
-void 
+void
 kernel_gpu_cuda_wrapper(par_str par_cpu,
 						dim_str dim_cpu,
 						box_str* box_cpu,
@@ -47,11 +47,6 @@ kernel_gpu_cuda_wrapper(par_str par_cpu,
 	// timer
 	long long time0;
 	long long time1;
-	long long time2;
-	long long time3;
-	long long time4;
-	long long time5;
-	long long time6;
 
 	time0 = get_time();
 
@@ -63,7 +58,7 @@ kernel_gpu_cuda_wrapper(par_str par_cpu,
 	//	INITIAL DRIVER OVERHEAD
 	//====================================================================================================100
 
-	cudaThreadSynchronize();
+	cudaDeviceSynchronize();
 
 	//====================================================================================================100
 	//	VARIABLES
@@ -73,6 +68,13 @@ kernel_gpu_cuda_wrapper(par_str par_cpu,
 	FOUR_VECTOR* d_rv_gpu;
 	fp* d_qv_gpu;
 	FOUR_VECTOR* d_fv_gpu;
+
+	cudaStream_t stream1, stream2, stream3, stream4;
+
+	cudaStreamCreate(&stream1);
+	cudaStreamCreate(&stream2);
+	cudaStreamCreate(&stream3);
+	cudaStreamCreate(&stream4);
 
 	dim3 threads;
 	dim3 blocks;
@@ -86,7 +88,6 @@ kernel_gpu_cuda_wrapper(par_str par_cpu,
 	threads.x = NUMBER_THREADS;											// define the number of threads in the block
 	threads.y = 1;
 
-	time1 = get_time();
 
 	//======================================================================================================================================================150
 	//	GPU MEMORY				(MALLOC)
@@ -100,21 +101,21 @@ kernel_gpu_cuda_wrapper(par_str par_cpu,
 	//	boxes
 	//==================================================50
 
-	cudaMalloc(	(void **)&d_box_gpu, 
+	cudaMalloc(	(void **)&d_box_gpu,
 				dim_cpu.box_mem);
 
 	//==================================================50
 	//	rv
 	//==================================================50
 
-	cudaMalloc(	(void **)&d_rv_gpu, 
+	cudaMalloc(	(void **)&d_rv_gpu,
 				dim_cpu.space_mem);
 
 	//==================================================50
 	//	qv
 	//==================================================50
 
-	cudaMalloc(	(void **)&d_qv_gpu, 
+	cudaMalloc(	(void **)&d_qv_gpu,
 				dim_cpu.space_mem2);
 
 	//====================================================================================================100
@@ -125,10 +126,9 @@ kernel_gpu_cuda_wrapper(par_str par_cpu,
 	//	fv
 	//==================================================50
 
-	cudaMalloc(	(void **)&d_fv_gpu, 
+	cudaMalloc(	(void **)&d_fv_gpu,
 				dim_cpu.space_mem);
 
-	time2 = get_time();
 
 	//======================================================================================================================================================150
 	//	GPU MEMORY			COPY
@@ -142,28 +142,28 @@ kernel_gpu_cuda_wrapper(par_str par_cpu,
 	//	boxes
 	//==================================================50
 
-	cudaMemcpy(	d_box_gpu, 
+	cudaMemcpyAsync(	d_box_gpu,
 				box_cpu,
-				dim_cpu.box_mem, 
-				cudaMemcpyHostToDevice);
+				dim_cpu.box_mem,
+				cudaMemcpyHostToDevice, stream1);
 
 	//==================================================50
 	//	rv
 	//==================================================50
 
-	cudaMemcpy(	d_rv_gpu,
+	cudaMemcpyAsync(	d_rv_gpu,
 				rv_cpu,
 				dim_cpu.space_mem,
-				cudaMemcpyHostToDevice);
+				cudaMemcpyHostToDevice, stream2);
 
 	//==================================================50
 	//	qv
 	//==================================================50
 
-	cudaMemcpy(	d_qv_gpu,
+	cudaMemcpyAsync(	d_qv_gpu,
 				qv_cpu,
 				dim_cpu.space_mem2,
-				cudaMemcpyHostToDevice);
+				cudaMemcpyHostToDevice, stream3);
 
 	//====================================================================================================100
 	//	GPU MEMORY				(MALLOC) COPY
@@ -173,12 +173,12 @@ kernel_gpu_cuda_wrapper(par_str par_cpu,
 	//	fv
 	//==================================================50
 
-	cudaMemcpy(	d_fv_gpu, 
-				fv_cpu, 
-				dim_cpu.space_mem, 
-				cudaMemcpyHostToDevice);
+	cudaMemcpyAsync(	d_fv_gpu,
+				fv_cpu,
+				dim_cpu.space_mem,
+				cudaMemcpyHostToDevice, stream4);
 
-	time3 = get_time();
+	cudaDeviceSynchronize();
 
 	//======================================================================================================================================================150
 	//	KERNEL
@@ -193,20 +193,18 @@ kernel_gpu_cuda_wrapper(par_str par_cpu,
 											d_fv_gpu);
 
 	checkCUDAError("Start");
-	cudaThreadSynchronize();
+	cudaDeviceSynchronize();
 
-	time4 = get_time();
 
 	//======================================================================================================================================================150
 	//	GPU MEMORY			COPY (CONTD.)
 	//======================================================================================================================================================150
 
-	cudaMemcpy(	fv_cpu, 
-				d_fv_gpu, 
-				dim_cpu.space_mem, 
+	cudaMemcpy(	fv_cpu,
+				d_fv_gpu,
+				dim_cpu.space_mem,
 				cudaMemcpyDeviceToHost);
 
-	time5 = get_time();
 
 	//======================================================================================================================================================150
 	//	GPU MEMORY DEALLOCATION
@@ -217,24 +215,17 @@ kernel_gpu_cuda_wrapper(par_str par_cpu,
 	cudaFree(d_fv_gpu);
 	cudaFree(d_box_gpu);
 
-	time6 = get_time();
+	time1 = get_time();
 
 	//======================================================================================================================================================150
 	//	DISPLAY TIMING
 	//======================================================================================================================================================150
 
-	printf("Time spent in different stages of GPU_CUDA KERNEL:\n");
-
-	printf("%15.12f s, %15.12f % : GPU: SET DEVICE / DRIVER INIT\n",	(float) (time1-time0) / 1000000, (float) (time1-time0) / (float) (time6-time0) * 100);
-	printf("%15.12f s, %15.12f % : GPU MEM: ALO\n", 					(float) (time2-time1) / 1000000, (float) (time2-time1) / (float) (time6-time0) * 100);
-	printf("%15.12f s, %15.12f % : GPU MEM: COPY IN\n",					(float) (time3-time2) / 1000000, (float) (time3-time2) / (float) (time6-time0) * 100);
-
-	printf("%15.12f s, %15.12f % : GPU: KERNEL\n",						(float) (time4-time3) / 1000000, (float) (time4-time3) / (float) (time6-time0) * 100);
-
-	printf("%15.12f s, %15.12f % : GPU MEM: COPY OUT\n",				(float) (time5-time4) / 1000000, (float) (time5-time4) / (float) (time6-time0) * 100);
-	printf("%15.12f s, %15.12f % : GPU MEM: FRE\n", 					(float) (time6-time5) / 1000000, (float) (time6-time5) / (float) (time6-time0) * 100);
-
 	printf("Total time:\n");
-	printf("%.12f s\n", 												(float) (time6-time0) / 1000000);
+	printf("%.12f s\n", 												(float) (time1-time0) / 1000000);
 
+	cudaStreamDestroy(stream1);
+	cudaStreamDestroy(stream2);
+	cudaStreamDestroy(stream3);
+	cudaStreamDestroy(stream4);
 }

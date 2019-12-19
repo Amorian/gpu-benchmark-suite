@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
 	/**
 	* Allocate memory on host and device
 	*/
-	distances = (float *)malloc(sizeof(float) * numRecords);
+	cudaHostAlloc((void **) &distances, sizeof(float) * numRecords, cudaHostAllocDefault);
 	cudaMalloc((void **) &d_locations,sizeof(LatLong) * numRecords);
 	cudaMalloc((void **) &d_distances,sizeof(float) * numRecords);
 
@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
     for(i=0;i<resultsCount;i++) {
       printf("%s --> Distance=%f\n",records[i].recString,records[i].distance);
     }
-    free(distances);
+    cudaFreeHost(distances);
     //Free memory
 	cudaFree(d_locations);
 	cudaFree(d_distances);
